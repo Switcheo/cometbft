@@ -324,6 +324,9 @@ func NewNodeWithContext(ctx context.Context,
 		return nil, err
 	}
 
+	// use to store file private validator, if remote signer is enabled
+	filePv := privValidator
+
 	// If an address is provided, listen on the socket for a connection from an
 	// external signing process.
 	if config.PrivValidatorListenAddr != "" {
@@ -377,7 +380,8 @@ func NewNodeWithContext(ctx context.Context,
 	}
 
 	// Make OracleReactor
-	oracleReactor := oracle.NewReactor(config.Oracle, pubKey, privValidator, proxyApp.Consensus())
+	// always use filePv to sign oracle votes, even if remote signer is used for signing block proposal and votes
+	oracleReactor := oracle.NewReactor(config.Oracle, pubKey, filePv, proxyApp.Consensus())
 	oracleInfo := oracleReactor.OracleInfo
 
 	// make block executor for consensus and blocksync reactors to execute blocks
