@@ -137,7 +137,7 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 			return
 		}
 
-		if success := pubKey.VerifySignature(types.OracleVoteSignBytes(msg), msg.Signature); !success {
+		if success := pubKey.VerifySignature(types.OracleVoteSignBytes(oracleR.ConsensusState.GetState().ChainID, msg), msg.Signature); !success {
 			logrus.Errorf("failed signature verification for validator: %v, skipping gossip", val.Address)
 			return
 		}

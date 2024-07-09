@@ -102,7 +102,7 @@ func (pv MockPV) SignVote(chainID string, vote *cmtproto.Vote) error {
 
 // Implements PrivValidator.
 func (pv MockPV) SignOracleVote(chainID string, vote *oracleproto.GossipedVotes) error {
-	signBytes := OracleVoteSignBytes(vote)
+	signBytes := OracleVoteSignBytes(chainID, vote)
 	sig, err := pv.PrivKey.Sign(signBytes)
 	if err != nil {
 		return err

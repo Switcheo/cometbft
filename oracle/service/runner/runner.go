@@ -71,7 +71,7 @@ func ProcessSignVoteQueue(oracleInfo *types.OracleInfo, consensusState *cs.State
 	}
 
 	// signing of vote should append the signature field of gossipVote
-	if err := oracleInfo.PrivValidator.SignOracleVote("", newGossipVote); err != nil {
+	if err := oracleInfo.PrivValidator.SignOracleVote(consensusState.GetState().ChainID, newGossipVote); err != nil {
 		log.Errorf("processSignVoteQueue: error signing oracle votes")
 		return
 	}
