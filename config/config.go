@@ -861,7 +861,7 @@ func DefaultOracleConfig() *OracleConfig {
 		MaxOracleGossipBlocksDelayed: 3,                      // keep all gossipVotes from at most 3 blocks behind
 		MaxOracleGossipAge:           20,                     // keep all gossipVotes from at most 20s ago
 		SignInterval:                 100 * time.Millisecond, // 0.1s
-		GossipInterval:               100 * time.Millisecond, // 0.1s
+		GossipInterval:               250 * time.Millisecond, // 0.25s
 		PruneInterval:                500 * time.Millisecond, // 0.5s
 		MaxGossipMsgSize:             65536,
 	}
