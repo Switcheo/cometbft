@@ -427,6 +427,12 @@ prune_interval = "{{ .Oracle.PruneInterval }}"
 # Max allowable size for votes that can be gossiped from peer to peer
 max_gossip_msg_size = {{ .Oracle.MaxGossipMsgSize }}
 
+# Enables subaccount signing for votes
+enable_subaccount_signing = {{ .Oracle.EnableSubaccountSigning }}
+
+# Path to the JSON file containing the subaccount key to use to sign oracle votes
+subaccount_key_file_path = "{{ .Oracle.SubaccountKeyFilePath }}"
+
 #######################################################
 ###         State Sync Configuration Options        ###
 #######################################################

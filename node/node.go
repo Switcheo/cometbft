@@ -25,6 +25,7 @@ import (
 	mempl "github.com/cometbft/cometbft/mempool"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/p2p/pex"
+	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	rpccore "github.com/cometbft/cometbft/rpc/core"
 	grpccore "github.com/cometbft/cometbft/rpc/grpc"
@@ -377,7 +378,15 @@ func NewNodeWithContext(ctx context.Context,
 	}
 
 	// Make OracleReactor
-	oracleReactor := oracle.NewReactor(config.Oracle, pubKey, privValidator, proxyApp.Consensus())
+	oracleSigningKey := privValidator
+
+	if config.Oracle.EnableSubaccountSigning {
+		// use subaccount to sign oracle votes instead
+		subaccountKey := privval.LoadFilePVEmptyState(config.Oracle.SubaccountKeyFile(config.RootDir), "")
+		oracleSigningKey = subaccountKey
+	}
+
+	oracleReactor := oracle.NewReactor(config.Oracle, pubKey, oracleSigningKey, proxyApp.Consensus())
 	oracleInfo := oracleReactor.OracleInfo
 
 	// make block executor for consensus and blocksync reactors to execute blocks

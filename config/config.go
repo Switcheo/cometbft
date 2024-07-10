@@ -853,17 +853,31 @@ type OracleConfig struct {
 	PruneInterval time.Duration `mapstructure:"prune_interval"`
 	// Max allowable size for votes that can be gossiped from peer to peer
 	MaxGossipMsgSize int `mapstructure:"max_gossip_msg_size"`
+	// Enables subaccount signing for votes
+	EnableSubaccountSigning bool `mapstructure:"enable_subaccount_signing"`
+	// Path to the JSON file containing the subaccount key to use to sign oracle votes
+	SubaccountKeyFilePath string `mapstructure:"subaccount_key_file_path"`
 }
+
+const (
+	DefaultOracleSubaccountKeyName = "oracle_subaccount_key.json"
+)
+
+var (
+	defaultOracleSubaccountKeyPath = filepath.Join(DefaultConfigDir, DefaultOracleSubaccountKeyName)
+)
 
 // DefaultOracleConfig returns a default configuration for the CometBFT oracle service
 func DefaultOracleConfig() *OracleConfig {
 	return &OracleConfig{
-		MaxOracleGossipBlocksDelayed: 3,                      // keep all gossipVotes from at most 3 blocks behind
-		MaxOracleGossipAge:           20,                     // keep all gossipVotes from at most 20s ago
-		SignInterval:                 100 * time.Millisecond, // 0.1s
-		GossipInterval:               250 * time.Millisecond, // 0.25s
-		PruneInterval:                500 * time.Millisecond, // 0.5s
-		MaxGossipMsgSize:             65536,
+		MaxOracleGossipBlocksDelayed: 3,                              // keep all gossipVotes from at most 3 blocks behind
+		MaxOracleGossipAge:           20,                             // keep all gossipVotes from at most 20s ago
+		SignInterval:                 100 * time.Millisecond,         // 0.1s
+		GossipInterval:               250 * time.Millisecond,         // 0.25s
+		PruneInterval:                500 * time.Millisecond,         // 0.5s
+		MaxGossipMsgSize:             65536,                          // only allow p2p of votes of max size 65536 bytes
+		EnableSubaccountSigning:      false,                          // default to false
+		SubaccountKeyFilePath:        defaultOracleSubaccountKeyPath, // default file path to subaccount key (config/oracle_subaccount_key.json)
 	}
 }
 
@@ -872,6 +886,11 @@ func TestOracleConfig() *OracleConfig {
 	cfg := DefaultOracleConfig()
 	cfg.MaxGossipMsgSize = 1000
 	return cfg
+}
+
+// SubaccountKeyFile returns the full path to the oracle_subaccount_key.json file
+func (cfg *OracleConfig) SubaccountKeyFile(rootDir string) string {
+	return rootify(cfg.SubaccountKeyFilePath, rootDir)
 }
 
 // ValidateBasic performs basic validation and returns an error if any check fails.
