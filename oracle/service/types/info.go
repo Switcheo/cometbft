@@ -33,3 +33,7 @@ type UnsignedVoteBuffer struct {
 
 var MainAccountSigPrefix = []byte{0x00}
 var SubAccountSigPrefix = []byte{0x01}
+
+var Ed25519SignType = []byte{0x02}
+var Sr25519SignType = []byte{0x03}
+var Secp256k1SignType = []byte{0x04}
