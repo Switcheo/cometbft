@@ -137,6 +137,17 @@ func PruneVoteBuffers(oracleInfo *types.OracleInfo, consensusState *cs.State) {
 
 				visitedVoteMap[key] = struct{}{}
 
+				// also prune votes for a given oracle id and timestamp, that have already been committed as results on chain
+				res, err := oracleInfo.ProxyApp.DoesOracleResultExist(context.Background(), &abcitypes.RequestDoesOracleResultExist{Key: key})
+				if err != nil {
+					log.Warnf("PruneVoteBuffers: unable to check if oracle result exist for vote: %v: %v", vote, err)
+				}
+
+				if res.DoesExist {
+					log.Infof("Pruning vote %v as it already exists on chain", vote)
+					continue
+				}
+
 				if vote.Timestamp >= latestAllowableTimestamp {
 					newVotes = append(newVotes, vote)
 				}
