@@ -142,6 +142,12 @@ func ToRequestValidateOracleVotes(req *RequestValidateOracleVotes) *Request {
 	}
 }
 
+func ToRequestDoesOracleResultExist(req *RequestDoesOracleResultExist) *Request {
+	return &Request{
+		Value: &Request_DoesOracleResultExist{req},
+	}
+}
+
 //----------------------------------------
 
 func ToResponseException(errStr string) *Response {

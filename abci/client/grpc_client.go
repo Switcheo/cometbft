@@ -257,3 +257,7 @@ func (cli *grpcClient) FetchOracleVotes(ctx context.Context, req *types.RequestF
 func (cli *grpcClient) ValidateOracleVotes(ctx context.Context, req *types.RequestValidateOracleVotes) (*types.ResponseValidateOracleVotes, error) {
 	return cli.client.ValidateOracleVotes(ctx, types.ToRequestValidateOracleVotes(req).GetValidateOracleVotes(), grpc.WaitForReady(true))
 }
+
+func (cli *grpcClient) DoesOracleResultExist(ctx context.Context, req *types.RequestDoesOracleResultExist) (*types.ResponseDoesOracleResultExist, error) {
+	return cli.client.DoesOracleResultExist(ctx, types.ToRequestDoesOracleResultExist(req).GetDoesOracleResultExist(), grpc.WaitForReady(true))
+}

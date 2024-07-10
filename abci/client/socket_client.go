@@ -445,6 +445,17 @@ func (cli *socketClient) ValidateOracleVotes(ctx context.Context, req *types.Req
 	return reqRes.Response.GetValidateOracleVotes(), cli.Error()
 }
 
+func (cli *socketClient) DoesOracleResultExist(ctx context.Context, req *types.RequestDoesOracleResultExist) (*types.ResponseDoesOracleResultExist, error) {
+	reqRes, err := cli.queueRequest(ctx, types.ToRequestDoesOracleResultExist(req))
+	if err != nil {
+		return nil, err
+	}
+	if err := cli.Flush(ctx); err != nil {
+		return nil, err
+	}
+	return reqRes.Response.GetDoesOracleResultExist(), cli.Error()
+}
+
 func (cli *socketClient) queueRequest(ctx context.Context, req *types.Request) (*ReqRes, error) {
 	reqres := NewReqRes(req)
 
