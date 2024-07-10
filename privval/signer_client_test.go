@@ -240,8 +240,8 @@ func TestSignerOracleVote(t *testing.T) {
 			}
 		})
 
-		require.NoError(t, tc.mockPV.SignOracleVote(tc.chainID, want))
-		require.NoError(t, tc.signerClient.SignOracleVote(tc.chainID, have))
+		require.NoError(t, tc.mockPV.SignOracleVote(tc.chainID, want, []byte{0x00}))
+		require.NoError(t, tc.signerClient.SignOracleVote(tc.chainID, have, []byte{0x00}))
 
 		assert.Equal(t, want.Signature, have.Signature)
 
@@ -253,8 +253,8 @@ func TestSignerOracleVote(t *testing.T) {
 		require.NoError(t, err)
 
 		// test verify sig with pv and signing client signatures
-		require.True(t, pvPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, want), want.Signature))
-		require.True(t, scPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, have), have.Signature))
+		require.True(t, pvPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, want), want.Signature[1:]))
+		require.True(t, scPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, have), have.Signature[1:]))
 	}
 }
 

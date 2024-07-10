@@ -75,8 +75,9 @@ func DefaultValidationRequestHandler(
 		}
 
 		vote := r.SignOracleVoteRequest.Vote
+		sigPrefix := r.SignOracleVoteRequest.SignaturePrefix
 
-		err = privVal.SignOracleVote(chainID, vote)
+		err = privVal.SignOracleVote(chainID, vote, sigPrefix)
 		if err != nil {
 			res = mustWrapMsg(&privvalproto.SignedOracleVoteResponse{
 				Vote: oracleproto.GossipedVotes{}, Error: &privvalproto.RemoteSignerError{Code: 0, Description: err.Error()}})

@@ -30,3 +30,6 @@ type UnsignedVoteBuffer struct {
 	Buffer    []*oracleproto.Vote
 	UpdateMtx cmtsync.RWMutex
 }
+
+var MainAccountSigPrefix = []byte{0x00}
+var SubAccountSigPrefix = []byte{0x01}
