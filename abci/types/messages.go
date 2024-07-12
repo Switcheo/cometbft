@@ -148,6 +148,12 @@ func ToRequestDoesOracleResultExist(req *RequestDoesOracleResultExist) *Request 
 	}
 }
 
+func ToRequestDoesSubaccountBelongToVal(req *RequestDoesSubaccountBelongToVal) *Request {
+	return &Request{
+		Value: &Request_DoesSubaccountBelongToVal{req},
+	}
+}
+
 //----------------------------------------
 
 func ToResponseException(errStr string) *Response {

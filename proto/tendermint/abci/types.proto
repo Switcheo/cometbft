@@ -39,6 +39,7 @@ service ABCI {
   rpc FetchOracleVotes(RequestFetchOracleVotes) returns (ResponseFetchOracleVotes);
   rpc ValidateOracleVotes(RequestValidateOracleVotes) returns (ResponseValidateOracleVotes);
   rpc DoesOracleResultExist(RequestDoesOracleResultExist) returns (ResponseDoesOracleResultExist);
+  rpc DoesSubaccountBelongToVal(RequestDoesSubaccountBelongToVal) returns (ResponseDoesSubaccountBelongToVal);
 }
 
 //----------------------------------------
@@ -66,6 +67,7 @@ message Request {
     RequestFetchOracleVotes    fetch_oracle_votes    = 22;
     RequestValidateOracleVotes validate_oracle_votes = 23;
     RequestDoesOracleResultExist does_oracle_result_exist = 24;
+    RequestDoesSubaccountBelongToVal does_subaccount_belong_to_val = 25;
   }
   reserved 4, 7, 9, 10;  // SetOption, BeginBlock, DeliverTx, EndBlock
 }
@@ -217,6 +219,10 @@ message RequestDoesOracleResultExist {
   string key = 1;
 }
 
+message RequestDoesSubaccountBelongToVal {
+  bytes address = 1;
+}
+
 //----------------------------------------
 // Response types
 
@@ -243,6 +249,7 @@ message Response {
     ResponseFetchOracleVotes    fetch_oracle_votes    = 23;
     ResponseValidateOracleVotes validate_oracle_votes = 24;
     ResponseDoesOracleResultExist does_oracle_result_exist = 25;
+    ResponseDoesSubaccountBelongToVal does_subaccount_belong_to_val = 26;
   }
   reserved 5, 8, 10, 11;  // SetOption, BeginBlock, DeliverTx, EndBlock
 }
@@ -412,6 +419,11 @@ message ResponseValidateOracleVotes {
 
 message ResponseDoesOracleResultExist {
   bool does_exist = 1;
+}
+
+message ResponseDoesSubaccountBelongToVal {
+  bool belongs_to_val = 1;
+  string val_address = 2;
 }
 
 //----------------------------------------
