@@ -423,7 +423,6 @@ message ResponseDoesOracleResultExist {
 
 message ResponseDoesSubaccountBelongToVal {
   bool belongs_to_val = 1;
-  string val_address = 2;
 }
 
 //----------------------------------------

@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/cometbft/cometbft/crypto"
 
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cs "github.com/cometbft/cometbft/consensus"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/oracle/service/runner"
@@ -146,6 +148,11 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 			return
 		}
 
+		// skip if its own buffer
+		if oracleR.OracleInfo.PubKey.Equals(pubKey) {
+			return
+		}
+
 		// check if signer is main account or subaccount
 		if bytes.Equal(accountType, oracletypes.MainAccountSigPrefix) {
 			// is main account, verify if oracle votes are from validator
@@ -156,17 +163,21 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 			}
 
 		} else if bytes.Equal(accountType, oracletypes.SubAccountSigPrefix) {
-			// add hook here to check if subaccount belongs to a validator
-			// hook should also return the actual address of the val, to be used later
-
 			// is subaccount, verify if the corresponding main account is a validator
+			res, err := oracleR.OracleInfo.ProxyApp.DoesSubaccountBelongToVal(context.Background(), &abcitypes.RequestDoesSubaccountBelongToVal{Address: pubKey.Address()})
+
+			if err != nil {
+				logrus.Warnf("unable to check if subaccount: %v belongs to validator: %v", pubKey.Address().String(), err)
+				return
+			}
+
+			if !res.BelongsToVal {
+				logrus.Debugf("subaccount: %v does not belong to a validator, skipping gossip", pubKey.Address().String())
+				return
+			}
+
 		} else {
 			logrus.Errorf("unsupported account type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.Pubkey))
-			return
-		}
-
-		// skip if its own buffer
-		if oracleR.OracleInfo.PubKey.Equals(pubKey) {
 			return
 		}
 
