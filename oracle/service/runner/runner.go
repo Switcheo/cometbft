@@ -65,14 +65,35 @@ func ProcessSignVoteQueue(oracleInfo *types.OracleInfo, consensusState *cs.State
 
 	// batch sign the entire unsignedVoteBuffer and add to gossipBuffer
 	newGossipVote := &oracleproto.GossipedVotes{
-		Validator:       oracleInfo.PubKey.Address(),
+		Pubkey:          oracleInfo.PubKey.Bytes(),
 		SignedTimestamp: time.Now().Unix(),
 		Votes:           unsignedVotes,
 	}
 
+	// set sigPrefix based on account type and sign type
+	sigPrefix := []byte{}
+	if oracleInfo.Config.EnableSubaccountSigning {
+		sigPrefix = append(sigPrefix, types.SubAccountSigPrefix...)
+	} else {
+		sigPrefix = append(sigPrefix, types.MainAccountSigPrefix...)
+	}
+
+	signType := oracleInfo.PubKey.Type()
+	switch signType {
+	case "ed25519":
+		sigPrefix = append(sigPrefix, types.Ed25519SignType...)
+	case "sr25519":
+		sigPrefix = append(sigPrefix, types.Sr25519SignType...)
+	case "secp256k1":
+		sigPrefix = append(sigPrefix, types.Secp256k1SignType...)
+	default:
+		log.Errorf("processSignVoteQueue: unsupported sign type: %v", signType)
+		return
+	}
+
 	// signing of vote should append the signature field of gossipVote
-	if err := oracleInfo.PrivValidator.SignOracleVote(consensusState.GetState().ChainID, newGossipVote, []byte{}); err != nil {
-		log.Errorf("processSignVoteQueue: error signing oracle votes")
+	if err := oracleInfo.PrivValidator.SignOracleVote(consensusState.GetState().ChainID, newGossipVote, sigPrefix); err != nil {
+		log.Errorf("processSignVoteQueue: error signing oracle votes: %v", err)
 		return
 	}
 

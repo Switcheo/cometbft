@@ -1,10 +1,15 @@
 package oracle
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/cometbft/cometbft/crypto/sr25519"
 
 	"github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/proxy"
@@ -124,21 +129,51 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 	oracleR.Logger.Debug("Receive", "src", e.Src, "chId", e.ChannelID, "msg", e.Message)
 	switch msg := e.Message.(type) {
 	case *oracleproto.GossipedVotes:
-		// verify sig of incoming gossip vote, throw if verification fails
-		_, val := oracleR.ConsensusState.Validators.GetByAddress(msg.Validator)
-		if val == nil {
-			logrus.Debugf("validator: %v not found in validator set, skipping gossip", hex.EncodeToString(msg.Validator))
+		// get account and sign type of oracle votes
+		accountType := []byte{msg.Signature[0]}
+		signType := []byte{msg.Signature[1]}
+		var pubKey crypto.PubKey
+
+		// get pubkey based on sign type
+		if bytes.Equal(signType, oracletypes.Ed25519SignType) {
+			pubKey = ed25519.PubKey(msg.Pubkey)
+		} else if bytes.Equal(signType, oracletypes.Sr25519SignType) {
+			pubKey = sr25519.PubKey(msg.Pubkey)
+		} else if bytes.Equal(signType, oracletypes.Secp256k1SignType) {
+			pubKey = secp256k1.PubKey(msg.Pubkey)
+		} else {
+			logrus.Errorf("unsupported sign type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.Pubkey))
 			return
 		}
-		pubKey := val.PubKey
+
+		// check if signer is main account or subaccount
+		if bytes.Equal(accountType, oracletypes.MainAccountSigPrefix) {
+			// is main account, verify if oracle votes are from validator
+			isVal := oracleR.ConsensusState.Validators.HasAddress(pubKey.Address())
+			if !isVal {
+				logrus.Debugf("validator: %v not found in validator set, skipping gossip", pubKey.Address().String())
+				return
+			}
+
+		} else if bytes.Equal(accountType, oracletypes.SubAccountSigPrefix) {
+			// add hook here to check if subaccount belongs to a validator
+			// hook should also return the actual address of the val, to be used later
+
+			// is subaccount, verify if the corresponding main account is a validator
+		} else {
+			logrus.Errorf("unsupported account type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.Pubkey))
+			return
+		}
 
 		// skip if its own buffer
 		if oracleR.OracleInfo.PubKey.Equals(pubKey) {
 			return
 		}
 
-		if success := pubKey.VerifySignature(types.OracleVoteSignBytes(oracleR.ConsensusState.GetState().ChainID, msg), msg.Signature); !success {
-			logrus.Errorf("failed signature verification for validator: %v, skipping gossip", val.Address)
+		// verify sig of incoming gossip vote, throw if verification fails
+		// signature starts from index 2 onwards due to the account and sign type prefix bytes
+		if success := pubKey.VerifySignature(types.OracleVoteSignBytes(oracleR.ConsensusState.GetState().ChainID, msg), msg.Signature[2:]); !success {
+			logrus.Errorf("failed signature verification for validator: %v, skipping gossip", pubKey.Address().String())
 			return
 		}
 

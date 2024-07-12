@@ -202,9 +202,15 @@ func TestSignerVote(t *testing.T) {
 
 func TestSignerOracleVote(t *testing.T) {
 	for _, tc := range getSignerTestCases(t) {
-		valAddr := cmtrand.Bytes(crypto.AddressSize)
+		// test get pubkey
+		pvPubKey, err := tc.mockPV.GetPubKey()
+		require.NoError(t, err)
+
+		scPubKey, err := tc.signerClient.GetPubKey()
+		require.NoError(t, err)
+
 		want := &oracleproto.GossipedVotes{
-			Validator:       valAddr,
+			Pubkey:          pvPubKey.Bytes(),
 			SignedTimestamp: 2,
 			Votes: []*oracleproto.Vote{
 				{
@@ -217,7 +223,7 @@ func TestSignerOracleVote(t *testing.T) {
 		}
 
 		have := &oracleproto.GossipedVotes{
-			Validator:       valAddr,
+			Pubkey:          scPubKey.Bytes(),
 			SignedTimestamp: 2,
 			Votes: []*oracleproto.Vote{
 				{
@@ -249,13 +255,6 @@ func TestSignerOracleVote(t *testing.T) {
 		require.NoError(t, tc.signerClient.SignOracleVote(tc.chainID, have, sigPrefix))
 
 		assert.Equal(t, want.Signature, have.Signature)
-
-		// test get pubkey
-		pvPubKey, err := tc.mockPV.GetPubKey()
-		require.NoError(t, err)
-
-		scPubKey, err := tc.signerClient.GetPubKey()
-		require.NoError(t, err)
 
 		// test verify sig with pv and signing client signatures
 		require.True(t, pvPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, want), want.Signature[2:]))

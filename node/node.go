@@ -379,14 +379,20 @@ func NewNodeWithContext(ctx context.Context,
 
 	// Make OracleReactor
 	oracleSigningKey := privValidator
+	oraclePubKey := pubKey
 
 	if config.Oracle.EnableSubaccountSigning {
 		// use subaccount to sign oracle votes instead
 		subaccountKey := privval.LoadFilePVEmptyState(config.Oracle.SubaccountKeyFile(config.RootDir), "")
 		oracleSigningKey = subaccountKey
+
+		oraclePubKey, err = subaccountKey.GetPubKey()
+		if err != nil {
+			return nil, fmt.Errorf("can't get oracle subaccount pubkey: %w", err)
+		}
 	}
 
-	oracleReactor := oracle.NewReactor(config.Oracle, pubKey, oracleSigningKey, proxyApp.Consensus())
+	oracleReactor := oracle.NewReactor(config.Oracle, oraclePubKey, oracleSigningKey, proxyApp.Consensus())
 	oracleInfo := oracleReactor.OracleInfo
 
 	// make block executor for consensus and blocksync reactors to execute blocks

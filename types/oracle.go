@@ -17,7 +17,7 @@ func OracleVoteSignBytes(chainID string, vote *oracleproto.GossipedVotes) []byte
 
 func CanonicalizeOracleVote(chainID string, vote *oracleproto.GossipedVotes) oracleproto.CanonicalGossipedVotes {
 	return oracleproto.CanonicalGossipedVotes{
-		Validator:       vote.Validator,
+		Pubkey:          vote.Pubkey,
 		Votes:           vote.Votes,
 		SignedTimestamp: vote.SignedTimestamp,
 		ChainId:         chainID,
