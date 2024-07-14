@@ -456,15 +456,15 @@ func (cli *socketClient) DoesOracleResultExist(ctx context.Context, req *types.R
 	return reqRes.Response.GetDoesOracleResultExist(), cli.Error()
 }
 
-func (cli *socketClient) DoesSubaccountBelongToVal(ctx context.Context, req *types.RequestDoesSubaccountBelongToVal) (*types.ResponseDoesSubaccountBelongToVal, error) {
-	reqRes, err := cli.queueRequest(ctx, types.ToRequestDoesSubaccountBelongToVal(req))
+func (cli *socketClient) DoesSubAccountBelongToVal(ctx context.Context, req *types.RequestDoesSubAccountBelongToVal) (*types.ResponseDoesSubAccountBelongToVal, error) {
+	reqRes, err := cli.queueRequest(ctx, types.ToRequestDoesSubAccountBelongToVal(req))
 	if err != nil {
 		return nil, err
 	}
 	if err := cli.Flush(ctx); err != nil {
 		return nil, err
 	}
-	return reqRes.Response.GetDoesSubaccountBelongToVal(), cli.Error()
+	return reqRes.Response.GetDoesSubAccountBelongToVal(), cli.Error()
 }
 
 func (cli *socketClient) queueRequest(ctx context.Context, req *types.Request) (*ReqRes, error) {

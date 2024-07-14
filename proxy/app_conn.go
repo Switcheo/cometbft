@@ -28,7 +28,7 @@ type AppConnConsensus interface {
 	FetchOracleVotes(context.Context, *types.RequestFetchOracleVotes) (*types.ResponseFetchOracleVotes, error)
 	ValidateOracleVotes(context.Context, *types.RequestValidateOracleVotes) (*types.ResponseValidateOracleVotes, error)
 	DoesOracleResultExist(context.Context, *types.RequestDoesOracleResultExist) (*types.ResponseDoesOracleResultExist, error)
-	DoesSubaccountBelongToVal(context.Context, *types.RequestDoesSubaccountBelongToVal) (*types.ResponseDoesSubaccountBelongToVal, error)
+	DoesSubAccountBelongToVal(context.Context, *types.RequestDoesSubAccountBelongToVal) (*types.ResponseDoesSubAccountBelongToVal, error)
 }
 
 type AppConnMempool interface {
@@ -134,9 +134,9 @@ func (app *appConnConsensus) DoesOracleResultExist(ctx context.Context, req *typ
 	return app.appConn.DoesOracleResultExist(ctx, req)
 }
 
-func (app *appConnConsensus) DoesSubaccountBelongToVal(ctx context.Context, req *types.RequestDoesSubaccountBelongToVal) (*types.ResponseDoesSubaccountBelongToVal, error) {
+func (app *appConnConsensus) DoesSubAccountBelongToVal(ctx context.Context, req *types.RequestDoesSubAccountBelongToVal) (*types.ResponseDoesSubAccountBelongToVal, error) {
 	defer addTimeSample(app.metrics.MethodTimingSeconds.With("method", "commit", "type", "sync"))()
-	return app.appConn.DoesSubaccountBelongToVal(ctx, req)
+	return app.appConn.DoesSubAccountBelongToVal(ctx, req)
 }
 
 //------------------------------------------------

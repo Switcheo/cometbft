@@ -148,9 +148,9 @@ func ToRequestDoesOracleResultExist(req *RequestDoesOracleResultExist) *Request 
 	}
 }
 
-func ToRequestDoesSubaccountBelongToVal(req *RequestDoesSubaccountBelongToVal) *Request {
+func ToRequestDoesSubAccountBelongToVal(req *RequestDoesSubAccountBelongToVal) *Request {
 	return &Request{
-		Value: &Request_DoesSubaccountBelongToVal{req},
+		Value: &Request_DoesSubAccountBelongToVal{req},
 	}
 }
 

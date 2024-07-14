@@ -262,6 +262,6 @@ func (cli *grpcClient) DoesOracleResultExist(ctx context.Context, req *types.Req
 	return cli.client.DoesOracleResultExist(ctx, types.ToRequestDoesOracleResultExist(req).GetDoesOracleResultExist(), grpc.WaitForReady(true))
 }
 
-func (cli *grpcClient) DoesSubaccountBelongToVal(ctx context.Context, req *types.RequestDoesSubaccountBelongToVal) (*types.ResponseDoesSubaccountBelongToVal, error) {
-	return cli.client.DoesSubaccountBelongToVal(ctx, types.ToRequestDoesSubaccountBelongToVal(req).GetDoesSubaccountBelongToVal(), grpc.WaitForReady(true))
+func (cli *grpcClient) DoesSubAccountBelongToVal(ctx context.Context, req *types.RequestDoesSubAccountBelongToVal) (*types.ResponseDoesSubAccountBelongToVal, error) {
+	return cli.client.DoesSubAccountBelongToVal(ctx, types.ToRequestDoesSubAccountBelongToVal(req).GetDoesSubAccountBelongToVal(), grpc.WaitForReady(true))
 }

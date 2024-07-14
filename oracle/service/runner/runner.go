@@ -65,14 +65,14 @@ func ProcessSignVoteQueue(oracleInfo *types.OracleInfo, consensusState *cs.State
 
 	// batch sign the entire unsignedVoteBuffer and add to gossipBuffer
 	newGossipVote := &oracleproto.GossipedVotes{
-		Pubkey:          oracleInfo.PubKey.Bytes(),
+		PubKey:          oracleInfo.PubKey.Bytes(),
 		SignedTimestamp: time.Now().Unix(),
 		Votes:           unsignedVotes,
 	}
 
 	// set sigPrefix based on account type and sign type
 	sigPrefix := []byte{}
-	if oracleInfo.Config.EnableSubaccountSigning {
+	if oracleInfo.Config.EnableSubAccountSigning {
 		sigPrefix = append(sigPrefix, types.SubAccountSigPrefix...)
 	} else {
 		sigPrefix = append(sigPrefix, types.MainAccountSigPrefix...)

@@ -138,13 +138,13 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 
 		// get pubkey based on sign type
 		if bytes.Equal(signType, oracletypes.Ed25519SignType) {
-			pubKey = ed25519.PubKey(msg.Pubkey)
+			pubKey = ed25519.PubKey(msg.PubKey)
 		} else if bytes.Equal(signType, oracletypes.Sr25519SignType) {
-			pubKey = sr25519.PubKey(msg.Pubkey)
+			pubKey = sr25519.PubKey(msg.PubKey)
 		} else if bytes.Equal(signType, oracletypes.Secp256k1SignType) {
-			pubKey = secp256k1.PubKey(msg.Pubkey)
+			pubKey = secp256k1.PubKey(msg.PubKey)
 		} else {
-			logrus.Errorf("unsupported sign type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.Pubkey))
+			logrus.Errorf("unsupported sign type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.PubKey))
 			return
 		}
 
@@ -164,7 +164,7 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 
 		} else if bytes.Equal(accountType, oracletypes.SubAccountSigPrefix) {
 			// is subaccount, verify if the corresponding main account is a validator
-			res, err := oracleR.OracleInfo.ProxyApp.DoesSubaccountBelongToVal(context.Background(), &abcitypes.RequestDoesSubaccountBelongToVal{Address: pubKey.Address()})
+			res, err := oracleR.OracleInfo.ProxyApp.DoesSubAccountBelongToVal(context.Background(), &abcitypes.RequestDoesSubAccountBelongToVal{Address: pubKey.Address()})
 
 			if err != nil {
 				logrus.Warnf("unable to check if subaccount: %v belongs to validator: %v", pubKey.Address().String(), err)
@@ -177,7 +177,7 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 			}
 
 		} else {
-			logrus.Errorf("unsupported account type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.Pubkey))
+			logrus.Errorf("unsupported account type for validator with pubkey: %v, skipping gossip", hex.EncodeToString(msg.PubKey))
 			return
 		}
 

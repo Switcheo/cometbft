@@ -381,14 +381,14 @@ func NewNodeWithContext(ctx context.Context,
 	oracleSigningKey := privValidator
 	oraclePubKey := pubKey
 
-	if config.Oracle.EnableSubaccountSigning {
-		// use subaccount to sign oracle votes instead
-		subaccountKey := privval.LoadFilePVEmptyState(config.Oracle.SubaccountKeyFile(config.RootDir), "")
-		oracleSigningKey = subaccountKey
+	if config.Oracle.EnableSubAccountSigning {
+		// use sub account to sign oracle votes instead
+		subAccountKey := privval.LoadFilePVEmptyState(config.Oracle.SubAccountKeyFile(config.RootDir), "")
+		oracleSigningKey = subAccountKey
 
-		oraclePubKey, err = subaccountKey.GetPubKey()
+		oraclePubKey, err = subAccountKey.GetPubKey()
 		if err != nil {
-			return nil, fmt.Errorf("can't get oracle subaccount pubkey: %w", err)
+			return nil, fmt.Errorf("can't get oracle sub account pubkey: %w", err)
 		}
 	}
 

@@ -40,7 +40,7 @@ type Application interface {
 	FetchOracleVotes(context.Context, *RequestFetchOracleVotes) (*ResponseFetchOracleVotes, error)
 	ValidateOracleVotes(context.Context, *RequestValidateOracleVotes) (*ResponseValidateOracleVotes, error)
 	DoesOracleResultExist(context.Context, *RequestDoesOracleResultExist) (*ResponseDoesOracleResultExist, error)
-	DoesSubaccountBelongToVal(context.Context, *RequestDoesSubaccountBelongToVal) (*ResponseDoesSubaccountBelongToVal, error)
+	DoesSubAccountBelongToVal(context.Context, *RequestDoesSubAccountBelongToVal) (*ResponseDoesSubAccountBelongToVal, error)
 }
 
 //-------------------------------------------------------
@@ -143,6 +143,6 @@ func (BaseApplication) DoesOracleResultExist(_ context.Context, req *RequestDoes
 	return &ResponseDoesOracleResultExist{}, nil
 }
 
-func (BaseApplication) DoesSubaccountBelongToVal(_ context.Context, req *RequestDoesSubaccountBelongToVal) (*ResponseDoesSubaccountBelongToVal, error) {
-	return &ResponseDoesSubaccountBelongToVal{}, nil
+func (BaseApplication) DoesSubAccountBelongToVal(_ context.Context, req *RequestDoesSubAccountBelongToVal) (*ResponseDoesSubAccountBelongToVal, error) {
+	return &ResponseDoesSubAccountBelongToVal{}, nil
 }
