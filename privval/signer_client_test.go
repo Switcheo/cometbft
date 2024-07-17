@@ -210,7 +210,7 @@ func TestSignerOracleVote(t *testing.T) {
 		require.NoError(t, err)
 
 		want := &oracleproto.GossipedVotes{
-			Pubkey:          pvPubKey.Bytes(),
+			PubKey:          pvPubKey.Bytes(),
 			SignedTimestamp: 2,
 			Votes: []*oracleproto.Vote{
 				{
@@ -223,7 +223,7 @@ func TestSignerOracleVote(t *testing.T) {
 		}
 
 		have := &oracleproto.GossipedVotes{
-			Pubkey:          scPubKey.Bytes(),
+			PubKey:          scPubKey.Bytes(),
 			SignedTimestamp: 2,
 			Votes: []*oracleproto.Vote{
 				{
