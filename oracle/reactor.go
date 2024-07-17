@@ -22,6 +22,7 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/oracle/service/runner"
 	oracletypes "github.com/cometbft/cometbft/oracle/service/types"
+	"github.com/cometbft/cometbft/oracle/service/utils"
 	"github.com/cometbft/cometbft/p2p"
 	oracleproto "github.com/cometbft/cometbft/proto/tendermint/oracle"
 	"github.com/cometbft/cometbft/types"
@@ -132,8 +133,7 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 	switch msg := e.Message.(type) {
 	case *oracleproto.GossipedVotes:
 		// get account and sign type of oracle votes
-		accountType := []byte{msg.Signature[0]}
-		signType := []byte{msg.Signature[1]}
+		accountType, signType := utils.GetAccountSignTypeFromSignature(msg.Signature)
 		var pubKey crypto.PubKey
 
 		// get pubkey based on sign type

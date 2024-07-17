@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/cometbft/cometbft/oracle/service/types"
+	"github.com/cometbft/cometbft/oracle/service/utils"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cs "github.com/cometbft/cometbft/consensus"
@@ -71,23 +72,9 @@ func ProcessSignVoteQueue(oracleInfo *types.OracleInfo, consensusState *cs.State
 	}
 
 	// set sigPrefix based on account type and sign type
-	sigPrefix := []byte{}
-	if oracleInfo.Config.EnableSubAccountSigning {
-		sigPrefix = append(sigPrefix, types.SubAccountSigPrefix...)
-	} else {
-		sigPrefix = append(sigPrefix, types.MainAccountSigPrefix...)
-	}
-
-	signType := oracleInfo.PubKey.Type()
-	switch signType {
-	case "ed25519":
-		sigPrefix = append(sigPrefix, types.Ed25519SignType...)
-	case "sr25519":
-		sigPrefix = append(sigPrefix, types.Sr25519SignType...)
-	case "secp256k1":
-		sigPrefix = append(sigPrefix, types.Secp256k1SignType...)
-	default:
-		log.Errorf("processSignVoteQueue: unsupported sign type: %v", signType)
+	sigPrefix, err := utils.FormSignaturePrefix(oracleInfo.Config.EnableSubAccountSigning, oracleInfo.PubKey.Type())
+	if err != nil {
+		log.Errorf("processSignVoteQueue: unable to form sig prefix: %v", err)
 		return
 	}
 
