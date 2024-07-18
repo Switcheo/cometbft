@@ -53,13 +53,13 @@ func ProcessSignVoteQueue(oracleInfo *types.OracleInfo, consensusState *cs.State
 
 	// batch sign the new votes, along with existing votes in gossipVoteBuffer, if any
 	// append new batch into unsignedVotesBuffer, need to mutex lock as it will clash with concurrent pruning
-	oracleInfo.UnsignedVoteBuffer.UpdateMtx.Lock()
+	oracleInfo.UnsignedVoteBuffer.Lock()
 	oracleInfo.UnsignedVoteBuffer.Buffer = append(oracleInfo.UnsignedVoteBuffer.Buffer, votes...)
 
 	unsignedVotes := []*oracleproto.Vote{}
 	unsignedVotes = append(unsignedVotes, oracleInfo.UnsignedVoteBuffer.Buffer...)
 
-	oracleInfo.UnsignedVoteBuffer.UpdateMtx.Unlock()
+	oracleInfo.UnsignedVoteBuffer.Unlock()
 
 	// sort the votes so that we can rebuild it in a deterministic order, when uncompressing
 	SortOracleVotes(unsignedVotes)
@@ -86,10 +86,10 @@ func ProcessSignVoteQueue(oracleInfo *types.OracleInfo, consensusState *cs.State
 
 	// need to mutex lock as it will clash with concurrent gossip
 	preLockTime := time.Now().UnixMilli()
-	oracleInfo.GossipVoteBuffer.UpdateMtx.Lock()
+	oracleInfo.GossipVoteBuffer.Lock()
 	address := oracleInfo.PubKey.Address().String()
 	oracleInfo.GossipVoteBuffer.Buffer[address] = newGossipVote
-	oracleInfo.GossipVoteBuffer.UpdateMtx.Unlock()
+	oracleInfo.GossipVoteBuffer.Unlock()
 	postLockTime := time.Now().UnixMilli()
 	diff := postLockTime - preLockTime
 	if diff > 100 {
@@ -131,7 +131,7 @@ func PruneVoteBuffers(oracleInfo *types.OracleInfo, consensusState *cs.State) {
 				latestAllowableTimestamp = oracleInfo.BlockTimestamps[0]
 			}
 
-			oracleInfo.UnsignedVoteBuffer.UpdateMtx.Lock()
+			oracleInfo.UnsignedVoteBuffer.Lock()
 			newVotes := []*oracleproto.Vote{}
 			unsignedVoteBuffer := oracleInfo.UnsignedVoteBuffer.Buffer
 			visitedVoteMap := make(map[string]struct{})
@@ -160,10 +160,10 @@ func PruneVoteBuffers(oracleInfo *types.OracleInfo, consensusState *cs.State) {
 				}
 			}
 			oracleInfo.UnsignedVoteBuffer.Buffer = newVotes
-			oracleInfo.UnsignedVoteBuffer.UpdateMtx.Unlock()
+			oracleInfo.UnsignedVoteBuffer.Unlock()
 
 			preLockTime := time.Now().UnixMilli()
-			oracleInfo.GossipVoteBuffer.UpdateMtx.Lock()
+			oracleInfo.GossipVoteBuffer.Lock()
 			gossipBuffer := oracleInfo.GossipVoteBuffer.Buffer
 
 			// prune gossipedVotes that are older than the latestAllowableTimestamp, which is the max(earliest block timestamp collected, current time - maxOracleGossipAge)
@@ -173,7 +173,7 @@ func PruneVoteBuffers(oracleInfo *types.OracleInfo, consensusState *cs.State) {
 				}
 			}
 			oracleInfo.GossipVoteBuffer.Buffer = gossipBuffer
-			oracleInfo.GossipVoteBuffer.UpdateMtx.Unlock()
+			oracleInfo.GossipVoteBuffer.Unlock()
 			postLockTime := time.Now().UnixMilli()
 			diff := postLockTime - preLockTime
 			if diff > 100 {

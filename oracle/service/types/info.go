@@ -22,13 +22,13 @@ type OracleInfo struct {
 	BlockTimestamps    []int64
 }
 type GossipVoteBuffer struct {
-	Buffer    map[string]*oracleproto.GossipedVotes
-	UpdateMtx cmtsync.RWMutex
+	Buffer map[string]*oracleproto.GossipedVotes
+	cmtsync.RWMutex
 }
 
 type UnsignedVoteBuffer struct {
-	Buffer    []*oracleproto.Vote
-	UpdateMtx cmtsync.RWMutex
+	Buffer []*oracleproto.Vote
+	cmtsync.RWMutex
 }
 
 var MainAccountSigPrefix = []byte{0x00}

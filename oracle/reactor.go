@@ -189,7 +189,7 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 		}
 
 		preLockTime := time.Now().UnixMilli()
-		oracleR.OracleInfo.GossipVoteBuffer.UpdateMtx.Lock()
+		oracleR.OracleInfo.GossipVoteBuffer.Lock()
 		currentGossipVote, ok := oracleR.OracleInfo.GossipVoteBuffer.Buffer[pubKey.Address().String()]
 
 		if !ok {
@@ -204,7 +204,7 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 				oracleR.OracleInfo.GossipVoteBuffer.Buffer[pubKey.Address().String()] = msg
 			}
 		}
-		oracleR.OracleInfo.GossipVoteBuffer.UpdateMtx.Unlock()
+		oracleR.OracleInfo.GossipVoteBuffer.Unlock()
 		postLockTime := time.Now().UnixMilli()
 		diff := postLockTime - preLockTime
 		if diff > 100 {
@@ -261,7 +261,7 @@ func (oracleR *Reactor) broadcastVoteRoutine(peer p2p.Peer) {
 		}
 
 		preLockTime := time.Now().UnixMilli()
-		oracleR.OracleInfo.GossipVoteBuffer.UpdateMtx.RLock()
+		oracleR.OracleInfo.GossipVoteBuffer.RLock()
 		votes := []*oracleproto.GossipedVotes{}
 		for _, gossipVote := range oracleR.OracleInfo.GossipVoteBuffer.Buffer {
 			// stop sending gossip votes that have passed the maxGossipVoteAge
@@ -271,7 +271,7 @@ func (oracleR *Reactor) broadcastVoteRoutine(peer p2p.Peer) {
 
 			votes = append(votes, gossipVote)
 		}
-		oracleR.OracleInfo.GossipVoteBuffer.UpdateMtx.RUnlock()
+		oracleR.OracleInfo.GossipVoteBuffer.RUnlock()
 		postLockTime := time.Now().UnixMilli()
 		diff := postLockTime - preLockTime
 		if diff > 100 {
