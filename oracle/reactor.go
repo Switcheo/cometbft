@@ -133,7 +133,11 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 	switch msg := e.Message.(type) {
 	case *oracleproto.GossipedVotes:
 		// get account and sign type of oracle votes
-		accountType, signType := utils.GetAccountSignTypeFromSignature(msg.Signature)
+		accountType, signType, err := utils.GetAccountSignTypeFromSignature(msg.Signature)
+		if err != nil {
+			logrus.Errorf("unable to get account and sign type from signature: %v", msg.Signature)
+			return
+		}
 		var pubKey crypto.PubKey
 
 		// get pubkey based on sign type
@@ -183,7 +187,11 @@ func (oracleR *Reactor) Receive(e p2p.Envelope) {
 
 		// verify sig of incoming gossip vote, throw if verification fails
 		// signature starts from index 2 onwards due to the account and sign type prefix bytes
-		if success := pubKey.VerifySignature(types.OracleVoteSignBytes(oracleR.ConsensusState.GetState().ChainID, msg), msg.Signature[2:]); !success {
+		signatureWithoutPrefix, err := utils.GetSignatureWithoutPrefix(msg.Signature)
+		if err != nil {
+			logrus.Errorf("unable to get signature without prefix, invalid signature: %v", msg.Signature)
+		}
+		if success := pubKey.VerifySignature(types.OracleVoteSignBytes(oracleR.ConsensusState.GetState().ChainID, msg), signatureWithoutPrefix); !success {
 			logrus.Errorf("failed signature verification for validator: %v, skipping gossip", pubKey.Address().String())
 			return
 		}

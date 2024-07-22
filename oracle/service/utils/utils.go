@@ -10,8 +10,11 @@ import (
 // index 0: accountType (if votes are signed by main val or oracle delegate)
 // index 1: signType (type of key used: ed25519/sr25519/secp256k1)
 
-func GetAccountSignTypeFromSignature(signature []byte) (accountType []byte, signType []byte) {
-	return []byte{signature[0]}, []byte{signature[1]}
+func GetAccountSignTypeFromSignature(signature []byte) (accountType []byte, signType []byte, err error) {
+	if len(signature) < 2 {
+		return nil, nil, fmt.Errorf("GetAccountSignTypeFromSignature: invalid signature: %v", signature)
+	}
+	return []byte{signature[0]}, []byte{signature[1]}, nil
 }
 
 func FormSignaturePrefix(isSubAccount bool, signType string) ([]byte, error) {
@@ -35,4 +38,12 @@ func FormSignaturePrefix(isSubAccount bool, signType string) ([]byte, error) {
 	}
 
 	return sigPrefix, nil
+}
+
+func GetSignatureWithoutPrefix(prefixedSig []byte) ([]byte, error) {
+	if len(prefixedSig) < 2 {
+		return nil, fmt.Errorf("GetSignature: invalid signature: %v", prefixedSig)
+	}
+
+	return prefixedSig[2:], nil
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	oracletypes "github.com/cometbft/cometbft/oracle/service/types"
+	"github.com/cometbft/cometbft/oracle/service/utils"
 	cryptoproto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	oracleproto "github.com/cometbft/cometbft/proto/tendermint/oracle"
 	privvalproto "github.com/cometbft/cometbft/proto/tendermint/privval"
@@ -247,18 +247,20 @@ func TestSignerOracleVote(t *testing.T) {
 			}
 		})
 
-		sigPrefix := []byte{}
-		sigPrefix = append(sigPrefix, oracletypes.MainAccountSigPrefix...)
-		sigPrefix = append(sigPrefix, oracletypes.Ed25519SignType...)
+		sigPrefix, err := utils.FormSignaturePrefix(false, "ed25519")
+		assert.Equal(t, err, nil)
 
 		require.NoError(t, tc.mockPV.SignOracleVote(tc.chainID, want, sigPrefix))
 		require.NoError(t, tc.signerClient.SignOracleVote(tc.chainID, have, sigPrefix))
 
 		assert.Equal(t, want.Signature, have.Signature)
 
+		signatureWithoutPrefix, err := utils.GetSignatureWithoutPrefix(have.Signature)
+		assert.Equal(t, err, nil)
+
 		// test verify sig with pv and signing client signatures
-		require.True(t, pvPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, want), want.Signature[2:]))
-		require.True(t, scPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, have), have.Signature[2:]))
+		require.True(t, pvPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, want), signatureWithoutPrefix))
+		require.True(t, scPubKey.VerifySignature(types.OracleVoteSignBytes(tc.chainID, have), signatureWithoutPrefix))
 	}
 }
 
