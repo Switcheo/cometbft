@@ -385,11 +385,15 @@ FOR_LOOP:
 }
 
 func (idx *BlockerIndexer) setTmpHeights(tmpHeights map[string][]byte, it dbm.Iterator) {
-	// If we return attributes that occur within the same events, then store the event sequence in the
-	// result map as well
+	// If we return attributes that occur within the same events, then store the
+	// event sequence in the result map as well.
 	eventSeq, _ := parseEventSeqFromEventKey(it.Key())
-	retVal := it.Value()
-	tmpHeights[string(retVal)+strconv.FormatInt(eventSeq, 10)] = it.Value()
+
+	// Copy the value because the iterator will be reused.
+	value := make([]byte, len(it.Value()))
+	copy(value, it.Value())
+
+	tmpHeights[string(value)+strconv.FormatInt(eventSeq, 10)] = value
 
 }
 
@@ -415,8 +419,8 @@ func (idx *BlockerIndexer) match(
 
 	tmpHeights := make(map[string][]byte)
 
-	switch {
-	case c.Op == syntax.TEq:
+	switch c.Op {
+	case syntax.TEq:
 		it, err := dbm.IteratePrefix(idx.store, startKeyBz)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create prefix iterator: %w", err)
@@ -450,7 +454,7 @@ func (idx *BlockerIndexer) match(
 			return nil, err
 		}
 
-	case c.Op == syntax.TExists:
+	case syntax.TExists:
 		prefix, err := orderedcode.Append(nil, c.Tag)
 		if err != nil {
 			return nil, err
@@ -493,7 +497,7 @@ func (idx *BlockerIndexer) match(
 			return nil, err
 		}
 
-	case c.Op == syntax.TContains:
+	case syntax.TContains:
 		prefix, err := orderedcode.Append(nil, c.Tag)
 		if err != nil {
 			return nil, err

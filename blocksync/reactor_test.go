@@ -141,7 +141,8 @@ func newReactor(
 
 		lastExtCommit := seenExtCommit.Clone()
 
-		thisBlock := state.MakeBlock(blockHeight, nil, lastExtCommit.ToCommit(), nil, state.Validators.Proposer.Address)
+		thisBlock, err := state.MakeBlock(blockHeight, nil, lastExtCommit.ToCommit(), nil, state.Validators.Proposer.Address)
+		require.NoError(t, err)
 
 		thisParts, err := thisBlock.MakePartSet(types.BlockPartSizeBytes)
 		require.NoError(t, err)
@@ -150,9 +151,9 @@ func newReactor(
 		// Simulate a commit for the current height
 		vote, err := types.MakeVote(
 			privVals[0],
-			thisBlock.Header.ChainID,
+			thisBlock.ChainID,
 			idx,
-			thisBlock.Header.Height,
+			thisBlock.Height,
 			0,
 			cmtproto.PrecommitType,
 			blockID,
@@ -223,10 +224,7 @@ func TestNoBlockResponse(t *testing.T) {
 		{100, false},
 	}
 
-	for {
-		if reactorPairs[1].reactor.pool.IsCaughtUp() {
-			break
-		}
+	for !reactorPairs[1].reactor.pool.IsCaughtUp() {
 
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -320,10 +318,7 @@ func TestBadBlockStopsPeer(t *testing.T) {
 		p2p.Connect2Switches(switches, i, len(reactorPairs)-1)
 	}
 
-	for {
-		if lastReactorPair.reactor.pool.IsCaughtUp() || lastReactorPair.reactor.Switch.Peers().Size() == 0 {
-			break
-		}
+	for !lastReactorPair.reactor.pool.IsCaughtUp() && lastReactorPair.reactor.Switch.Peers().Size() != 0 {
 
 		time.Sleep(1 * time.Second)
 	}
