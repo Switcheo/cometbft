@@ -42,6 +42,12 @@ var (
 	testPartSize uint32 = types.BlockPartSizeBytes
 )
 
+var EMPTY_ORACLE_INFO = oracletypes.OracleInfo{
+	GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
+		Buffer: make(map[string]*oracleproto.GossipedVotes),
+	},
+}
+
 func TestApplyBlock(t *testing.T) {
 	app := &testApp{}
 	cc := proxy.NewLocalClientCreator(app)
@@ -758,19 +764,13 @@ func TestEmptyPrepareProposal(t *testing.T) {
 		mock.Anything).Return(nil)
 	mp.On("ReapMaxBytesMaxGas", mock.Anything, mock.Anything).Return(types.Txs{})
 
-	oracleInfo := oracletypes.OracleInfo{
-		GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
-			Buffer: make(map[string]*oracleproto.GossipedVotes),
-		},
-	}
-
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.TestingLogger(),
 		proxyApp.Consensus(),
 		mp,
-		&oracleInfo,
+		&EMPTY_ORACLE_INFO,
 		sm.EmptyEvidencePool{},
 		blockStore,
 	)
@@ -810,15 +810,13 @@ func TestPrepareProposalTxsAllIncluded(t *testing.T) {
 	require.NoError(t, err)
 	defer proxyApp.Stop() //nolint:errcheck // ignore for tests
 
-	oracleInfo := oracletypes.OracleInfo{}
-
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.TestingLogger(),
 		proxyApp.Consensus(),
 		mp,
-		&oracleInfo,
+		&EMPTY_ORACLE_INFO,
 		evpool,
 		blockStore,
 	)
@@ -868,15 +866,13 @@ func TestPrepareProposalReorderTxs(t *testing.T) {
 	require.NoError(t, err)
 	defer proxyApp.Stop() //nolint:errcheck // ignore for tests
 
-	oracleInfo := oracletypes.OracleInfo{}
-
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.TestingLogger(),
 		proxyApp.Consensus(),
 		mp,
-		&oracleInfo,
+		&EMPTY_ORACLE_INFO,
 		evpool,
 		blockStore,
 	)
@@ -927,15 +923,13 @@ func TestPrepareProposalErrorOnTooManyTxs(t *testing.T) {
 	require.NoError(t, err)
 	defer proxyApp.Stop() //nolint:errcheck // ignore for tests
 
-	oracleInfo := oracletypes.OracleInfo{}
-
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.NewNopLogger(),
 		proxyApp.Consensus(),
 		mp,
-		&oracleInfo,
+		&EMPTY_ORACLE_INFO,
 		evpool,
 		blockStore,
 	)
@@ -987,14 +981,13 @@ func TestPrepareProposalCountSerializationOverhead(t *testing.T) {
 	require.NoError(t, err)
 	defer proxyApp.Stop() //nolint:errcheck // ignore for tests
 
-	oracleInfo := oracletypes.OracleInfo{}
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.NewNopLogger(),
 		proxyApp.Consensus(),
 		mp,
-		&oracleInfo,
+		&EMPTY_ORACLE_INFO,
 		evpool,
 		blockStore,
 	)
@@ -1040,15 +1033,13 @@ func TestPrepareProposalErrorOnPrepareProposalError(t *testing.T) {
 	require.NoError(t, err)
 	defer proxyApp.Stop() //nolint:errcheck // ignore for tests
 
-	oracleInfo := oracletypes.OracleInfo{}
-
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.NewNopLogger(),
 		proxyApp.Consensus(),
 		mp,
-		&oracleInfo,
+		&EMPTY_ORACLE_INFO,
 		evpool,
 		blockStore,
 	)
@@ -1132,15 +1123,13 @@ func TestCreateProposalAbsentVoteExtensions(t *testing.T) {
 				mock.Anything).Return(nil)
 			mp.On("ReapMaxBytesMaxGas", mock.Anything, mock.Anything).Return(types.Txs{})
 
-			oracleInfo := oracletypes.OracleInfo{}
-
 			blockStore := store.NewBlockStore(dbm.NewMemDB())
 			blockExec := sm.NewBlockExecutor(
 				stateStore,
 				log.NewNopLogger(),
 				proxyApp.Consensus(),
 				mp,
-				&oracleInfo,
+				&EMPTY_ORACLE_INFO,
 				sm.EmptyEvidencePool{},
 				blockStore,
 			)
