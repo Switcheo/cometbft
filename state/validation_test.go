@@ -398,12 +398,14 @@ func TestValidateBlockTime(t *testing.T) {
 		mock.Anything).Return(nil)
 
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
+	oracleInfo := oracletypes.OracleInfo{}
 
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.TestingLogger(),
 		proxyApp.Consensus(),
 		mp,
+		&oracleInfo,
 		sm.EmptyEvidencePool{},
 		blockStore,
 	)
@@ -473,12 +475,14 @@ func TestValidateBlockInvalidCommit(t *testing.T) {
 		mock.Anything).Return(nil)
 
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
+	oracleInfo := oracletypes.OracleInfo{}
 
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
 		log.TestingLogger(),
 		proxyApp.Consensus(),
 		mp,
+		&oracleInfo,
 		sm.EmptyEvidencePool{},
 		blockStore,
 	)

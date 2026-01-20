@@ -34,6 +34,7 @@ import (
 	cmttime "github.com/cometbft/cometbft/types/time"
 
 	oracletypes "github.com/cometbft/cometbft/oracle/service/types"
+	oracleproto "github.com/cometbft/cometbft/proto/tendermint/oracle"
 )
 
 func TestNodeStartStop(t *testing.T) {
@@ -315,7 +316,11 @@ func TestCreateProposalBlock(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	oracleInfo := oracletypes.OracleInfo{}
+	oracleInfo := oracletypes.OracleInfo{
+		GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
+			Buffer: make(map[string]*oracleproto.GossipedVotes),
+		},
+	}
 
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
