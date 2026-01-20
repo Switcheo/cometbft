@@ -2,8 +2,6 @@ module github.com/cometbft/cometbft
 
 go 1.22.11
 
-toolchain go1.22.6
-
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/semver/v3 v3.3.1
@@ -48,6 +46,8 @@ require (
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.5
 )
+
+require github.com/sirupsen/logrus v1.9.0
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -112,14 +112,8 @@ require (
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/securego/gosec/v2 v2.15.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
-	github.com/sivchari/containedctx v1.0.2 // indirect
-	github.com/sivchari/nosnakecase v1.7.0 // indirect
-	github.com/sivchari/tenv v1.7.1 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
-	github.com/sonatard/noctx v0.0.2 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
