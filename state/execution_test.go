@@ -22,6 +22,7 @@ import (
 	"github.com/cometbft/cometbft/internal/test"
 	"github.com/cometbft/cometbft/libs/log"
 	mpmocks "github.com/cometbft/cometbft/mempool/mocks"
+	oracleproto "github.com/cometbft/cometbft/proto/tendermint/oracle"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmtversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/proxy"
@@ -757,7 +758,11 @@ func TestEmptyPrepareProposal(t *testing.T) {
 		mock.Anything).Return(nil)
 	mp.On("ReapMaxBytesMaxGas", mock.Anything, mock.Anything).Return(types.Txs{})
 
-	oracleInfo := oracletypes.OracleInfo{}
+	oracleInfo := oracletypes.OracleInfo{
+		GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
+			Buffer: make(map[string]*oracleproto.GossipedVotes),
+		},
+	}
 
 	blockStore := store.NewBlockStore(dbm.NewMemDB())
 	blockExec := sm.NewBlockExecutor(

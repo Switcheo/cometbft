@@ -400,7 +400,11 @@ func TestMaxProposalBlockSize(t *testing.T) {
 	err = mempool.CheckTx(tx, nil, mempl.TxInfo{})
 	assert.NoError(t, err)
 
-	oracleInfo := oracletypes.OracleInfo{}
+	oracleInfo := oracletypes.OracleInfo{
+		GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
+			Buffer: make(map[string]*oracleproto.GossipedVotes),
+		},
+	}
 
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
