@@ -1738,7 +1738,7 @@ func TestPrepareProposalReceivesVoteExtensions(t *testing.T) {
 		}
 		extSignBytes, err := protoio.MarshalDelimited(&cve)
 		require.NoError(t, err)
-		pubKey, err := vss[i].PrivValidator.GetPubKey()
+		pubKey, err := vss[i].GetPubKey()
 		require.NoError(t, err)
 		require.True(t, pubKey.VerifySignature(extSignBytes, vote.ExtensionSignature))
 	}
@@ -1936,6 +1936,38 @@ func TestVoteExtensionEnableHeight(t *testing.T) {
 			m.AssertExpectations(t)
 		})
 	}
+}
+
+// TestStateDoesntCrashOnInvalidVote tests that the state does not crash when
+// receiving an invalid vote. In particular, one with the incorrect
+// ValidatorIndex.
+func TestStateDoesntCrashOnInvalidVote(t *testing.T) {
+	cs, vss := randState(2)
+	height, round := cs.Height, cs.Round
+	// create dummy peer
+	peer := p2pmock.NewPeer(nil)
+
+	startTestRound(cs, height, round)
+
+	_, propBlock := decideProposal(context.Background(), t, cs, vss[0], height, round)
+	propBlockParts, err := propBlock.MakePartSet(types.BlockPartSizeBytes)
+	assert.NoError(t, err)
+
+	vote := signVote(vss[1], cmtproto.PrecommitType, propBlock.Hash(), propBlockParts.Header(), true)
+
+	// Non-existent validator index
+	vote.ValidatorIndex = int32(len(vss))
+
+	voteMessage := &VoteMessage{vote}
+	assert.NotPanics(t, func() {
+		cs.handleMsg(msgInfo{voteMessage, peer.ID()})
+	})
+
+	added, err := cs.AddVote(vote, peer.ID())
+	assert.False(t, added)
+	assert.NoError(t, err)
+	// TODO: uncomment once we punish peer and return an error
+	// assert.Equal(t, ErrInvalidVote{Reason: "ValidatorIndex 2 is out of bounds [0, 2)"}, err)
 }
 
 // 4 vals, 3 Nil Precommits at P0
@@ -2564,13 +2596,14 @@ func findBlockSizeLimit(t *testing.T, height, maxBytes int64, cs *State, partSiz
 	}
 	softMaxDataBytes := int(types.MaxDataBytes(maxBytes, 0, 0))
 	for i := softMaxDataBytes; i < softMaxDataBytes*2; i++ {
-		propBlock := cs.state.MakeBlock(
+		propBlock, err := cs.state.MakeBlock(
 			height,
 			[]types.Tx{[]byte("a=" + strings.Repeat("o", i-2))},
 			&types.Commit{},
 			nil,
 			cs.privValidatorPubKey.Address(),
 		)
+		require.NoError(t, err)
 
 		propBlockParts, err := propBlock.MakePartSet(partSize)
 		require.NoError(t, err)

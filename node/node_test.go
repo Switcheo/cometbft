@@ -34,6 +34,7 @@ import (
 	cmttime "github.com/cometbft/cometbft/types/time"
 
 	oracletypes "github.com/cometbft/cometbft/oracle/service/types"
+	oracleproto "github.com/cometbft/cometbft/proto/tendermint/oracle"
 )
 
 func TestNodeStartStop(t *testing.T) {
@@ -164,7 +165,7 @@ func TestNodeSetPrivValTCP(t *testing.T) {
 
 	config := test.ResetTestRoot("node_priv_val_tcp_test")
 	defer os.RemoveAll(config.RootDir)
-	config.BaseConfig.PrivValidatorListenAddr = addr
+	config.PrivValidatorListenAddr = addr
 
 	dialer := privval.DialTCPFn(addr, 100*time.Millisecond, ed25519.GenPrivKey())
 	dialerEndpoint := privval.NewSignerDialerEndpoint(
@@ -198,7 +199,7 @@ func TestPrivValidatorListenAddrNoProtocol(t *testing.T) {
 
 	config := test.ResetTestRoot("node_priv_val_tcp_test")
 	defer os.RemoveAll(config.RootDir)
-	config.BaseConfig.PrivValidatorListenAddr = addrNoPrefix
+	config.PrivValidatorListenAddr = addrNoPrefix
 
 	_, err := DefaultNewNode(config, log.TestingLogger())
 	assert.Error(t, err)
@@ -210,7 +211,7 @@ func TestNodeSetPrivValIPC(t *testing.T) {
 
 	config := test.ResetTestRoot("node_priv_val_tcp_test")
 	defer os.RemoveAll(config.RootDir)
-	config.BaseConfig.PrivValidatorListenAddr = "unix://" + tmpfile
+	config.PrivValidatorListenAddr = "unix://" + tmpfile
 
 	dialer := privval.DialUnixFn(tmpfile)
 	dialerEndpoint := privval.NewSignerDialerEndpoint(
@@ -315,7 +316,11 @@ func TestCreateProposalBlock(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	oracleInfo := oracletypes.OracleInfo{}
+	oracleInfo := oracletypes.OracleInfo{
+		GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
+			Buffer: make(map[string]*oracleproto.GossipedVotes),
+		},
+	}
 
 	blockExec := sm.NewBlockExecutor(
 		stateStore,
@@ -395,7 +400,11 @@ func TestMaxProposalBlockSize(t *testing.T) {
 	err = mempool.CheckTx(tx, nil, mempl.TxInfo{})
 	assert.NoError(t, err)
 
-	oracleInfo := oracletypes.OracleInfo{}
+	oracleInfo := oracletypes.OracleInfo{
+		GossipVoteBuffer: &oracletypes.GossipVoteBuffer{
+			Buffer: make(map[string]*oracleproto.GossipedVotes),
+		},
+	}
 
 	blockExec := sm.NewBlockExecutor(
 		stateStore,

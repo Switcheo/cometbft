@@ -26,6 +26,7 @@ import (
 	"github.com/cometbft/cometbft/libs/bytes"
 	"github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/log"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	cmtsync "github.com/cometbft/cometbft/libs/sync"
 	mempl "github.com/cometbft/cometbft/mempool"
 	"github.com/cometbft/cometbft/p2p"
@@ -703,7 +704,7 @@ func waitForAndValidateBlockWithTx(
 			// check that txs match the txs we're waiting for.
 			// note they could be spread over multiple blocks,
 			// but they should be in order.
-			for _, tx := range newBlock.Data.Txs {
+			for _, tx := range newBlock.Txs {
 				assert.EqualValues(t, txs[ntxs], tx)
 				ntxs++
 			}
@@ -887,6 +888,14 @@ func TestNewValidBlockMessageValidateBasic(t *testing.T) {
 			func(msg *NewValidBlockMessage) { msg.BlockParts = bits.NewBitArray(int(types.MaxBlockPartsCount) + 1) },
 			"blockParts bit array size 1602 not equal to BlockPartSetHeader.Total 1",
 		},
+		{
+			func(msg *NewValidBlockMessage) { msg.BlockParts.Elems = nil },
+			"mismatch between specified number of bits 1, and number of elements 0, expected 1 elements",
+		},
+		{
+			func(msg *NewValidBlockMessage) { msg.BlockParts.Bits = 500 },
+			"mismatch between specified number of bits 500, and number of elements 1, expected 8 elements",
+		},
 	}
 
 	for i, tc := range testCases {
@@ -922,6 +931,14 @@ func TestProposalPOLMessageValidateBasic(t *testing.T) {
 		{
 			func(msg *ProposalPOLMessage) { msg.ProposalPOL = bits.NewBitArray(types.MaxVotesCount + 1) },
 			"proposalPOL bit array is too big: 10001, max: 10000",
+		},
+		{
+			func(msg *ProposalPOLMessage) { msg.ProposalPOL.Elems = nil },
+			"mismatch between specified number of bits 1, and number of elements 0, expected 1 elements",
+		},
+		{
+			func(msg *ProposalPOLMessage) { msg.ProposalPOL.Bits = 500 },
+			"mismatch between specified number of bits 500, and number of elements 1, expected 8 elements",
 		},
 	}
 
@@ -1079,6 +1096,14 @@ func TestVoteSetBitsMessageValidateBasic(t *testing.T) {
 			func(msg *VoteSetBitsMessage) { msg.Votes = bits.NewBitArray(types.MaxVotesCount + 1) },
 			"votes bit array is too big: 10001, max: 10000",
 		},
+		{
+			func(msg *VoteSetBitsMessage) { msg.Votes.Elems = nil },
+			"mismatch between specified number of bits 1, and number of elements 0, expected 1 elements",
+		},
+		{
+			func(msg *VoteSetBitsMessage) { msg.Votes.Bits = 500 },
+			"mismatch between specified number of bits 500, and number of elements 1, expected 8 elements",
+		},
 	}
 
 	for i, tc := range testCases {
@@ -1128,4 +1153,40 @@ func TestMarshalJSONPeerState(t *testing.T) {
 			"votes":"0",
 			"block_parts":"0"}
 		}`, string(data))
+}
+
+func TestVoteMessageValidateBasic(t *testing.T) {
+	_, vss := randState(2)
+
+	randBytes := cmtrand.Bytes(tmhash.Size)
+	blockID := types.BlockID{
+		Hash: randBytes,
+		PartSetHeader: types.PartSetHeader{
+			Total: 1,
+			Hash:  randBytes,
+		},
+	}
+	vote := signVote(vss[1], cmtproto.PrecommitType, randBytes, blockID.PartSetHeader, true)
+
+	testCases := []struct {
+		malleateFn func(*VoteMessage)
+		expErr     string
+	}{
+		{func(_ *VoteMessage) {}, ""},
+		{func(msg *VoteMessage) { msg.Vote.ValidatorIndex = -1 }, "negative ValidatorIndex"},
+		// INVALID, but passes ValidateBasic, since the method does not know the number of active validators
+		{func(msg *VoteMessage) { msg.Vote.ValidatorIndex = 1000 }, ""},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("#%d", i), func(t *testing.T) {
+			msg := &VoteMessage{vote}
+
+			tc.malleateFn(msg)
+			err := msg.ValidateBasic()
+			if tc.expErr != "" && assert.Error(t, err) { //nolint:testifylint // require.Error doesn't work with the conditional here
+				assert.Contains(t, err.Error(), tc.expErr)
+			}
+		})
+	}
 }
