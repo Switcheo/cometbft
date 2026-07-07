@@ -141,7 +141,7 @@ func TestTxSearch(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.q, func(t *testing.T) {
-			results, err := indexer.Search(ctx, query.MustCompile(tc.q))
+			results, _, err := indexer.Search(ctx, query.MustCompile(tc.q), txindex.Pagination{})
 			assert.NoError(t, err)
 
 			assert.Len(t, results, tc.resultsLength)
@@ -234,7 +234,7 @@ func TestTxSearchEventMatch(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.q, func(t *testing.T) {
-			results, err := indexer.Search(ctx, query.MustCompile(tc.q))
+			results, _, err := indexer.Search(ctx, query.MustCompile(tc.q), txindex.Pagination{})
 			assert.NoError(t, err)
 
 			assert.Len(t, results, tc.resultsLength)
@@ -310,7 +310,7 @@ func TestTxSearchEventMatchByHeight(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.q, func(t *testing.T) {
-			results, err := indexer.Search(ctx, query.MustCompile(tc.q))
+			results, _, err := indexer.Search(ctx, query.MustCompile(tc.q), txindex.Pagination{})
 			assert.NoError(t, err)
 
 			assert.Len(t, results, tc.resultsLength)
@@ -343,7 +343,7 @@ func TestTxSearchWithCancelation(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	results, err := indexer.Search(ctx, query.MustCompile(`account.number = 1`))
+	results, _, err := indexer.Search(ctx, query.MustCompile(`account.number = 1`), txindex.Pagination{})
 	assert.NoError(t, err)
 	assert.Empty(t, results)
 }
@@ -416,7 +416,7 @@ func TestTxSearchDeprecatedIndexing(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.q, func(t *testing.T) {
-			results, err := indexer.Search(ctx, query.MustCompile(tc.q))
+			results, _, err := indexer.Search(ctx, query.MustCompile(tc.q), txindex.Pagination{})
 			require.NoError(t, err)
 			for _, txr := range results {
 				for _, tr := range tc.results {
@@ -499,7 +499,7 @@ func TestTxSearchOneTxWithMultipleSameTagsButDifferentValues(t *testing.T) {
 	ctx := context.Background()
 
 	for _, tc := range testCases {
-		results, err := indexer.Search(ctx, query.MustCompile(tc.q))
+		results, _, err := indexer.Search(ctx, query.MustCompile(tc.q), txindex.Pagination{})
 		assert.NoError(t, err)
 		n := 0
 		if tc.found {
@@ -656,10 +656,80 @@ func TestTxSearchMultipleTxs(t *testing.T) {
 
 	ctx := context.Background()
 
-	results, err := indexer.Search(ctx, query.MustCompile(`account.number >= 1`))
+	results, _, err := indexer.Search(ctx, query.MustCompile(`account.number >= 1`), txindex.Pagination{})
 	assert.NoError(t, err)
 
 	require.Len(t, results, 3)
+}
+
+// TestTxSearchPagination verifies the backported paginated Search: it must
+// order results by (height, index), honor asc/desc, return the correct page and
+// total count, and only materialize the requested page.
+func TestTxSearchPagination(t *testing.T) {
+	indexer := NewTxIndex(db.NewMemDB())
+	ctx := context.Background()
+
+	// Index 25 txs sharing a common event value, across several blocks with
+	// multiple txs per block, so both the height and the index tiebreak matter.
+	const total = 25
+	type ref struct {
+		height int64
+		index  uint32
+	}
+	var order []ref
+	for h := int64(1); h <= 5; h++ {
+		for i := uint32(0); i < 5; i++ {
+			txr := &abci.TxResult{
+				Height: h,
+				Index:  i,
+				Tx:     types.Tx(fmt.Sprintf("tx-%d-%d", h, i)),
+				Result: abci.ExecTxResult{
+					Code: abci.CodeTypeOK,
+					Events: []abci.Event{{
+						Type:       "app",
+						Attributes: []abci.EventAttribute{{Key: "group", Value: "g1", Index: true}},
+					}},
+				},
+			}
+			require.NoError(t, indexer.Index(txr))
+			order = append(order, ref{h, i})
+		}
+	}
+	require.Len(t, order, total)
+
+	q := query.MustCompile(`app.group = 'g1'`)
+
+	// Non-paginated: returns every match.
+	all, count, err := indexer.Search(ctx, q, txindex.Pagination{})
+	require.NoError(t, err)
+	require.Equal(t, total, count)
+	require.Len(t, all, total)
+
+	// Ascending pages of 10: 10 + 10 + 5, all in (height, index) order.
+	var gotAsc []ref
+	for page := 1; page <= 3; page++ {
+		res, c, err := indexer.Search(ctx, q, txindex.Pagination{IsPaginated: true, Page: page, PerPage: 10})
+		require.NoError(t, err)
+		require.Equal(t, total, c, "total count is independent of page size")
+		for _, r := range res {
+			gotAsc = append(gotAsc, ref{r.Height, r.Index})
+		}
+	}
+	require.Equal(t, order, gotAsc, "ascending pages must reconstruct the full (height, index) ordering")
+
+	// Descending first page must be the highest (height, index) tuples.
+	desc, _, err := indexer.Search(ctx, q, txindex.Pagination{OrderDesc: true, IsPaginated: true, Page: 1, PerPage: 3})
+	require.NoError(t, err)
+	require.Len(t, desc, 3)
+	require.Equal(t, []ref{{5, 4}, {5, 3}, {5, 2}}, []ref{
+		{desc[0].Height, desc[0].Index},
+		{desc[1].Height, desc[1].Index},
+		{desc[2].Height, desc[2].Index},
+	})
+
+	// Out-of-range page is an error (matches historical validatePage behavior).
+	_, _, err = indexer.Search(ctx, q, txindex.Pagination{IsPaginated: true, Page: 99, PerPage: 10})
+	require.Error(t, err)
 }
 
 func txResultWithEvents(events []abci.Event) *abci.TxResult {
@@ -785,7 +855,7 @@ func TestBigInt(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.q, func(t *testing.T) {
-			results, err := indexer.Search(ctx, query.MustCompile(tc.q))
+			results, _, err := indexer.Search(ctx, query.MustCompile(tc.q), txindex.Pagination{})
 			assert.NoError(t, err)
 			assert.Len(t, results, tc.resultsLength)
 			if tc.resultsLength > 0 && tc.txRes != nil {

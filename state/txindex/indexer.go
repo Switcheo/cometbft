@@ -26,11 +26,24 @@ type TxIndexer interface {
 	// or stored.
 	Get(hash []byte) (*abci.TxResult, error)
 
-	// Search allows you to query for transactions.
-	Search(ctx context.Context, q *query.Query) ([]*abci.TxResult, error)
+	// Search allows you to query for transactions. It returns the matching
+	// transactions (a single page when pagSettings.IsPaginated is set) and the
+	// total number of matches.
+	Search(ctx context.Context, q *query.Query, pagSettings Pagination) ([]*abci.TxResult, int, error)
 
 	//Set Logger
 	SetLogger(l log.Logger)
+}
+
+// Pagination provides pagination information for queries.
+// This allows the same Search API to be used both for paginated public
+// queries and for internal callers that need the full result set (by leaving
+// IsPaginated false).
+type Pagination struct {
+	OrderDesc   bool
+	IsPaginated bool
+	Page        int
+	PerPage     int
 }
 
 // Batch groups together multiple Index operations to be performed at the same time.
